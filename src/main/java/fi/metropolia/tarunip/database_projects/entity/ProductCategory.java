@@ -6,6 +6,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
+
+import java.util.ArrayList;
+import java.util.List;
+
 // ProductCategory contains the name and description of a product category
 // allows the application to read and store product category information
 
@@ -20,6 +27,14 @@ public class ProductCategory {
     private String name;
 
     private String description;
+
+    // One category can have many products.
+    @OneToMany(
+            mappedBy = "category",
+            cascade = CascadeType.ALL,
+            fetch = FetchType.LAZY
+    )
+    private List<Product> products = new ArrayList<>();
 
     public ProductCategory() {
     }
@@ -46,6 +61,20 @@ public class ProductCategory {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public List<Product> getProducts() {
+        return products;
+    }
+
+    // Adds a product to this category and keeps both sides in sync
+    public void addProduct(Product product) {
+        products.add(product);
+        product.setCategory(this);
+    }
+
+    public void setProducts(List<Product> products) {
+        this.products = products;
     }
 }
 
