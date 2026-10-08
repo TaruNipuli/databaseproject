@@ -13,6 +13,8 @@ import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 // ProductCategory contains the name and description of a product category
 // allows the application to read and store product category information
 
@@ -63,6 +65,7 @@ public class ProductCategory {
         this.description = description;
     }
 
+    @JsonIgnore // Prevents recursive JSON output
     public List<Product> getProducts() {
         return products;
     }
