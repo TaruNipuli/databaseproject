@@ -1,14 +1,16 @@
 package fi.metropolia.tarunip.database_projects.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Convert;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 // Represents an order in the database
@@ -27,18 +29,33 @@ public class Order {
     )
     private List<Product> products;
 
-    public Integer getId() {
-        return id;
-    }
-
-    @JsonIgnore // Prevents recursive JSON output
+    // Prevents recursive JSON output
+    @JsonIgnore
     public List<Product> getProducts() {
         return products;
     }
 
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
+    private LocalDateTime orderDate;
+
     // Converts order status between enum and database text
     @Convert(converter = OrderStatusConverter.class)
     private OrderStatus status;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public LocalDateTime getOrderDate() {
+        return orderDate;
+    }
 
     public OrderStatus getStatus() {
         return status;
@@ -48,13 +65,3 @@ public class Order {
         this.status = status;
     }
 }
-
-
-
-
-
-
-
-
-
-

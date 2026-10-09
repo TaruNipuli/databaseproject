@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn;
 
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.math.BigDecimal;
 
@@ -16,6 +17,11 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "products")
 public class Product {
+
+    // Optimistic locking version
+    @Version
+    private Integer version;
+
 
     // Automatically generated product ID
     @Id
@@ -84,5 +90,9 @@ public class Product {
 
     public void setCategory(ProductCategory category) {
         this.category = category;
+    }
+
+    public Integer getVersion() {
+        return version;
     }
 }

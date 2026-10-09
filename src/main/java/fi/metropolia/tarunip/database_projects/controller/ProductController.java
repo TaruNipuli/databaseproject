@@ -71,4 +71,30 @@ public class ProductController {
 
         return productService.searchProducts(minPrice, minStock);
     }
+
+    // Updates an existing product (name, description, price, stock quantity) by its ID
+    @PutMapping("/{id}")
+    public Product updateProduct(@PathVariable Integer id, @RequestBody Product updatedProduct) {
+        Product product = repository.findById(id).orElseThrow();
+
+        product.setName(updatedProduct.getName());
+        product.setDescription(updatedProduct.getDescription());
+        product.setPrice(updatedProduct.getPrice());
+        product.setStock_quantity(updatedProduct.getStock_quantity());
+
+        return repository.save(product);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
