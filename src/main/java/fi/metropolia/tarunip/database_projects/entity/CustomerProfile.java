@@ -1,5 +1,7 @@
+
 package fi.metropolia.tarunip.database_projects.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,6 +24,7 @@ public class CustomerProfile {
     private String postal_code;
     private String country;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;

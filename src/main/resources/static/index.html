@@ -20,22 +20,13 @@
             color: #333;
         }
 
-        #search {
+        #search,
+        #category,
+        #customerId {
             width: 100%;
             box-sizing: border-box;
             padding: 12px;
-            margin: 20px 0;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-
-        /* Style the category dropdown like the search field */
-        #category {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 12px;
-            margin-bottom: 20px;
+            margin: 12px 0 20px;
             font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 6px;
@@ -60,7 +51,32 @@
             color: #287a45;
         }
 
-        #message {
+        .quantity {
+            width: 80px;
+            padding: 8px;
+            margin-right: 8px;
+        }
+
+        button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 6px;
+            background-color: #287a45;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1e5d34;
+        }
+
+        button:disabled {
+            background-color: #999;
+            cursor: not-allowed;
+        }
+
+        #message,
+        #orderMessage {
             margin: 20px 0;
         }
     </style>
@@ -68,7 +84,17 @@
 <body>
 
 <h1>Online Store</h1>
-<p>Browse our products.</p>
+<p>Browse our products and place an order.</p>
+
+<!-- Customer ID used for the order -->
+<label for="customerId">Customer ID</label>
+<input
+        type="number"
+        id="customerId"
+        min="1"
+        value="1"
+        placeholder="Enter customer ID"
+>
 
 <!-- Search field for filtering products by name -->
 <input
@@ -83,6 +109,7 @@
 </select>
 
 <p id="message">Loading products...</p>
+<p id="orderMessage" role="status"></p>
 <div id="products"></div>
 
 <script>
@@ -167,7 +194,6 @@
         // A product must match both filters when they are selected
         const filteredProducts = allProducts.filter(product => {
             const matchesName = product.name.toLowerCase().includes(search);
-
             const matchesCategory = selectedCategory === ""
                 || product.category?.name === selectedCategory;
 
@@ -201,7 +227,6 @@
             // Display the product category in English
             const category = document.createElement("p");
             const categoryName = product.category?.name || "";
-
             category.textContent =
                 categoryTranslations[categoryName] || categoryName;
 
@@ -210,20 +235,112 @@
 
             const price = document.createElement("p");
             price.className = "price";
-            price.textContent =
-                Number(product.price).toLocaleString("en-IE", {
-                    style: "currency",
-                    currency: "EUR"
-                });
+            price.textContent = Number(product.price).toLocaleString("en-IE", {
+                style: "currency",
+                currency: "EUR"
+            });
 
             const stock = document.createElement("p");
             stock.textContent =
                 "In stock: " + product.stock_quantity + " units";
 
-            // Add product details to the card
-            card.append(name, category, description, price, stock);
+            // Adds a quantity field for ordering this product
+            const quantityLabel = document.createElement("label");
+            quantityLabel.textContent = "Quantity: ";
+
+            const quantity = document.createElement("input");
+            quantity.type = "number";
+            quantity.className = "quantity";
+            quantity.min = "1";
+            quantity.max = product.stock_quantity;
+            quantity.value = "1";
+            quantity.setAttribute("aria-label", "Quantity for " + product.name);
+            quantity.disabled = product.stock_quantity <= 0;
+
+            // Adds a button for placing an order
+            const orderButton = document.createElement("button");
+            orderButton.textContent = "Place order";
+            orderButton.disabled = product.stock_quantity <= 0;
+
+            orderButton.addEventListener("click", () => {
+                createOrder(product, quantity, orderButton);
+            });
+
+            // Add product details and order controls to the card
+            quantityLabel.appendChild(quantity);
+            card.append(
+                name,
+                category,
+                description,
+                price,
+                stock,
+                quantityLabel,
+                orderButton
+            );
+
             productsDiv.appendChild(card);
         });
+    }
+
+    // Sends an order to the Spring Boot REST API
+    async function createOrder(product, quantityInput, orderButton) {
+        const customerId = Number(document.getElementById("customerId").value);
+        const quantity = Number(quantityInput.value);
+        const orderMessage = document.getElementById("orderMessage");
+
+        // Checks the customer ID
+        if (!Number.isInteger(customerId) || customerId <= 0) {
+            orderMessage.textContent = "Enter a valid customer ID.";
+            return;
+        }
+
+        // Checks the quantity
+        if (!Number.isInteger(quantity)
+            || quantity <= 0
+            || quantity > product.stock_quantity) {
+            orderMessage.textContent =
+                "Enter a valid quantity within the available stock.";
+            return;
+        }
+
+        // Prevents repeated clicks while the request is being processed
+        orderButton.disabled = true;
+        orderMessage.textContent = "Placing order...";
+
+        try {
+            const response = await fetch("/orders", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    customerId: customerId,
+                    items: [{
+                        productId: product.id,
+                        quantity: quantity
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("Order failed. HTTP status: " + response.status);
+            }
+
+            const order = await response.json();
+
+            // Shows the order number returned by the server
+            orderMessage.textContent =
+                "Order placed successfully. Order ID: " + order.id;
+
+            // Reloads products to show the updated stock
+            await loadProducts();
+        } catch (error) {
+            orderMessage.textContent =
+                "Could not place the order. Check the customer ID and try again.";
+            console.error(error);
+        } finally {
+            orderButton.disabled = false;
+        }
     }
 
     // Update the results whenever the search field changes
