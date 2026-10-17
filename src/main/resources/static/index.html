@@ -30,6 +30,17 @@
             border-radius: 6px;
         }
 
+        /* Style the category dropdown like the search field */
+        #category {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
         #products {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -66,6 +77,11 @@
         placeholder="Search products by name..."
 >
 
+<!-- Dropdown for filtering products by category -->
+<select id="category">
+    <option value="">All categories</option>
+</select>
+
 <p id="message">Loading products...</p>
 <div id="products"></div>
 
@@ -84,8 +100,13 @@
                 throw new Error("Failed to fetch products.");
             }
 
-            // Save the fetched products and display the results
+            // Save the fetched products
             allProducts = await response.json();
+
+            // Populate the category dropdown
+            loadCategories();
+
+            // Display the products
             filterProducts();
         } catch (error) {
             message.textContent =
@@ -94,17 +115,67 @@
         }
     }
 
-    // Filters products by the text entered in the search field
+    // Populates the dropdown with categories found in the products
+    function loadCategories() {
+        const categorySelect = document.getElementById("category");
+
+        // Translate Finnish category names from the database into English
+        // since everything else in the app is in English
+        const categoryTranslations = {
+            "Elektroniikka": "Electronics",
+            "Kodin tarvikkeet": "Home & Household",
+            "Vaatteet": "Clothing",
+            "Elintarvikkeet": "Groceries",
+            "Työkalut": "Tools",
+            "Puhelimet & lisävarusteet": "Phones & Accessories",
+            "Huonekalut": "Furniture",
+            "Puutarha & piha": "Garden & Outdoor",
+            "Kirjat & toimisto": "Books & Office",
+            "Urheilu & vapaa-aika": "Sports & Leisure",
+            "Lemmikit": "Pets"
+        };
+
+        // Get unique category names and sort them alphabetically
+        const categories = [...new Set(
+            allProducts
+                .map(product => product.category)
+                .filter(category => category != null)
+                .map(category => category.name)
+        )].sort();
+
+        // Add each category to the dropdown in English
+        categories.forEach(category => {
+            const option = document.createElement("option");
+
+            // Keep the Finnish name as the value for filtering
+            option.value = category;
+
+            // Display the English translation
+            option.textContent = categoryTranslations[category] || category;
+
+            categorySelect.appendChild(option);
+        });
+    }
+
+    // Filters products by name and selected category
     function filterProducts() {
         const search = document.getElementById("search")
             .value.toLowerCase().trim();
 
-        // Match product names without considering letter case
-        const filteredProducts = allProducts.filter(product =>
-            product.name.toLowerCase().includes(search)
-        );
+        // Get the selected category
+        const selectedCategory = document.getElementById("category").value;
 
-        // Display only the products that match the search
+        // A product must match both filters when they are selected
+        const filteredProducts = allProducts.filter(product => {
+            const matchesName = product.name.toLowerCase().includes(search);
+
+            const matchesCategory = selectedCategory === ""
+                || product.category?.name === selectedCategory;
+
+            return matchesName && matchesCategory;
+        });
+
+        // Display only the products that match the filters
         displayProducts(filteredProducts);
     }
 
@@ -151,6 +222,10 @@
     // Update the results whenever the search field changes
     document.getElementById("search")
         .addEventListener("input", filterProducts);
+
+    // Update the results whenever the category changes
+    document.getElementById("category")
+        .addEventListener("change", filterProducts);
 
     // Load products when the page opens
     loadProducts();
