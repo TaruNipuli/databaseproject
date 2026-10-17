@@ -89,6 +89,21 @@
     // Stores all products fetched from the API
     let allProducts = [];
 
+    // Translates Finnish category names into English
+    const categoryTranslations = {
+        "Elektroniikka": "Electronics",
+        "Kodin tarvikkeet": "Home & Household",
+        "Vaatteet": "Clothing",
+        "Elintarvikkeet": "Groceries",
+        "Työkalut": "Tools",
+        "Puhelimet & lisävarusteet": "Phones & Accessories",
+        "Huonekalut": "Furniture",
+        "Puutarha & piha": "Garden & Outdoor",
+        "Kirjat & toimisto": "Books & Office",
+        "Urheilu & vapaa-aika": "Sports & Leisure",
+        "Lemmikit": "Pets"
+    };
+
     // Fetches products from the Spring Boot REST API
     async function loadProducts() {
         const message = document.getElementById("message");
@@ -118,22 +133,6 @@
     // Populates the dropdown with categories found in the products
     function loadCategories() {
         const categorySelect = document.getElementById("category");
-
-        // Translate Finnish category names from the database into English
-        // since everything else in the app is in English
-        const categoryTranslations = {
-            "Elektroniikka": "Electronics",
-            "Kodin tarvikkeet": "Home & Household",
-            "Vaatteet": "Clothing",
-            "Elintarvikkeet": "Groceries",
-            "Työkalut": "Tools",
-            "Puhelimet & lisävarusteet": "Phones & Accessories",
-            "Huonekalut": "Furniture",
-            "Puutarha & piha": "Garden & Outdoor",
-            "Kirjat & toimisto": "Books & Office",
-            "Urheilu & vapaa-aika": "Sports & Leisure",
-            "Lemmikit": "Pets"
-        };
 
         // Get unique category names and sort them alphabetically
         const categories = [...new Set(
@@ -199,6 +198,13 @@
             const name = document.createElement("h2");
             name.textContent = product.name;
 
+            // Display the product category in English
+            const category = document.createElement("p");
+            const categoryName = product.category?.name || "";
+
+            category.textContent =
+                categoryTranslations[categoryName] || categoryName;
+
             const description = document.createElement("p");
             description.textContent = product.description || "";
 
@@ -214,7 +220,8 @@
             stock.textContent =
                 "In stock: " + product.stock_quantity + " units";
 
-            card.append(name, description, price, stock);
+            // Add product details to the card
+            card.append(name, category, description, price, stock);
             productsDiv.appendChild(card);
         });
     }
