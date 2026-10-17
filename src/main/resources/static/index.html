@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Store Application</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background-color: #f5f5f5;
+            color: #222;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #products {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .product {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px #ddd;
+        }
+
+        .price {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #287a45;
+        }
+
+        #message {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Online Store</h1>
+<p>Browse our products.</p>
+
+<p id="message">Loading products...</p>
+<div id="products"></div>
+
+<script>
+    async function loadProducts() {
+        const message = document.getElementById("message");
+        const productsDiv = document.getElementById("products");
+
+        try {
+            const response = await fetch("/products");
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch products.");
+            }
+
+            const products = await response.json();
+
+            message.textContent = products.length === 0
+                ? "No products found."
+                : "";
+
+            productsDiv.replaceChildren();
+
+            products.forEach(product => {
+                const card = document.createElement("div");
+                card.className = "product";
+
+                const name = document.createElement("h2");
+                name.textContent = product.name;
+
+                const description = document.createElement("p");
+                description.textContent = product.description || "";
+
+                const price = document.createElement("p");
+                price.className = "price";
+                price.textContent =
+                    Number(product.price).toLocaleString("en-IE", {
+                        style: "currency",
+                        currency: "EUR"
+                    });
+
+                const stock = document.createElement("p");
+                stock.textContent =
+                    "In stock: " + product.stock_quantity + " units";
+
+                card.append(name, description, price, stock);
+                productsDiv.appendChild(card);
+            });
+        } catch (error) {
+            message.textContent =
+                "Failed to load products. Please check that the server is running.";
+            console.error(error);
+        }
+    }
+
+    loadProducts();
+</script>
+
+</body>
+</html>

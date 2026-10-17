@@ -10,6 +10,7 @@ The project is built with Spring Boot and MariaDB and uses a REST API and JPA to
 - Spring Boot
 - MariaDB
 - JPA (Java Persistence API)
+- Maven
 
 ## Database
 The application uses a MariaDB database with the following tables:
