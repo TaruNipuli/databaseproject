@@ -37,6 +37,13 @@ public class OrderController {
         return repository.findAll();
     }
 
+    // Returns all orders belonging to a customer
+    @GetMapping("/customer/{customerId}")
+    public List<Order> getOrdersByCustomer(
+            @PathVariable Integer customerId) {
+        return repository.findByCustomerId(customerId);
+    }
+
     // Creates a new order
     @PostMapping
     public Order createOrder(@RequestBody OrderRequest request) {
