@@ -20,6 +20,16 @@
             color: #333;
         }
 
+        #search {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin: 20px 0;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
         #products {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -49,13 +59,23 @@
 <h1>Online Store</h1>
 <p>Browse our products.</p>
 
+<!-- Search field for filtering products by name -->
+<input
+        type="text"
+        id="search"
+        placeholder="Search products by name..."
+>
+
 <p id="message">Loading products...</p>
 <div id="products"></div>
 
 <script>
+    // Stores all products fetched from the API
+    let allProducts = [];
+
+    // Fetches products from the Spring Boot REST API
     async function loadProducts() {
         const message = document.getElementById("message");
-        const productsDiv = document.getElementById("products");
 
         try {
             const response = await fetch("/products");
@@ -64,39 +84,9 @@
                 throw new Error("Failed to fetch products.");
             }
 
-            const products = await response.json();
-
-            message.textContent = products.length === 0
-                ? "No products found."
-                : "";
-
-            productsDiv.replaceChildren();
-
-            products.forEach(product => {
-                const card = document.createElement("div");
-                card.className = "product";
-
-                const name = document.createElement("h2");
-                name.textContent = product.name;
-
-                const description = document.createElement("p");
-                description.textContent = product.description || "";
-
-                const price = document.createElement("p");
-                price.className = "price";
-                price.textContent =
-                    Number(product.price).toLocaleString("en-IE", {
-                        style: "currency",
-                        currency: "EUR"
-                    });
-
-                const stock = document.createElement("p");
-                stock.textContent =
-                    "In stock: " + product.stock_quantity + " units";
-
-                card.append(name, description, price, stock);
-                productsDiv.appendChild(card);
-            });
+            // Save the fetched products and display the results
+            allProducts = await response.json();
+            filterProducts();
         } catch (error) {
             message.textContent =
                 "Failed to load products. Please check that the server is running.";
@@ -104,6 +94,65 @@
         }
     }
 
+    // Filters products by the text entered in the search field
+    function filterProducts() {
+        const search = document.getElementById("search")
+            .value.toLowerCase().trim();
+
+        // Match product names without considering letter case
+        const filteredProducts = allProducts.filter(product =>
+            product.name.toLowerCase().includes(search)
+        );
+
+        // Display only the products that match the search
+        displayProducts(filteredProducts);
+    }
+
+    // Displays the given products as cards
+    function displayProducts(products) {
+        const message = document.getElementById("message");
+        const productsDiv = document.getElementById("products");
+
+        // Clear the previous results before displaying new ones
+        productsDiv.replaceChildren();
+
+        // Show the number of matches or a message if none are found
+        message.textContent = products.length === 0
+            ? "No products found."
+            : products.length + " product(s) found.";
+
+        products.forEach(product => {
+            const card = document.createElement("div");
+            card.className = "product";
+
+            const name = document.createElement("h2");
+            name.textContent = product.name;
+
+            const description = document.createElement("p");
+            description.textContent = product.description || "";
+
+            const price = document.createElement("p");
+            price.className = "price";
+            price.textContent =
+                Number(product.price).toLocaleString("en-IE", {
+                    style: "currency",
+                    currency: "EUR"
+                });
+
+            const stock = document.createElement("p");
+            stock.textContent =
+                "In stock: " + product.stock_quantity + " units";
+
+            card.append(name, description, price, stock);
+            productsDiv.appendChild(card);
+        });
+    }
+
+    // Update the results whenever the search field changes
+    document.getElementById("search")
+        .addEventListener("input", filterProducts);
+
+    // Load products when the page opens
     loadProducts();
 </script>
 
